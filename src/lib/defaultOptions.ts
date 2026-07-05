@@ -3,7 +3,8 @@ import type { ActivityOption, ProgramOption, UserTypeOption } from "@/types";
 export const storageKeys = {
   modelLoaded: "psbat:model-loaded",
   scaleInputs: "psbat:scale-inputs",
-  generatedOverlay: "psbat:generated-overlay"
+  generatedOverlay: "psbat:generated-overlay",
+  modelCoefficients: "psbat:model-coefficients"
 };
 
 export const defaultUserTypes: UserTypeOption[] = [

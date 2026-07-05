@@ -460,7 +460,9 @@ export function buildBehaviourDataset(
   const exitMarkers = inputs.markers.filter((m) => m.type === "exit");
   const accessMarkers = [...entranceMarkers, ...exitMarkers]; // all access points
   const areaMarkers = inputs.markers.filter((m) => m.type === "program");
-  const slots = inputs.timeSlots.length ? inputs.timeSlots : [];
+  const slots = inputs.timeSlots.length
+    ? inputs.timeSlots
+    : [{ id: "all-day", label: "All Day", start: inputs.operationHours.opening, end: inputs.operationHours.closing }];
 
   const userTypes: BehaviourUserType[] = inputs.userTypes.map((u) => ({
     id: u.id,

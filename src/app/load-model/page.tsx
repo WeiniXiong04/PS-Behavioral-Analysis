@@ -1,5 +1,5 @@
-import { ModelLoader } from "@/components/ModelLoader";
+import { redirect } from "next/navigation";
 
 export default function LoadModelPage() {
-  return <ModelLoader />;
+  redirect("/scale");
 }

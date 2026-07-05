@@ -75,7 +75,7 @@ export function BehaviourMasterplanViewer({
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
               Masterplan Output · computed from your configuration
             </div>
-            <h2 className="font-display mt-2 text-3xl text-black md:text-4xl">
+            <h2 className="font-dot mt-2 text-3xl font-black uppercase text-black md:text-4xl">
               Behaviour Masterplan Overview
             </h2>
           </div>
