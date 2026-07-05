@@ -4,18 +4,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import {
-  activityPoints,
-  entranceMarkers,
-  movementFlows,
-  publicSpaceBoundary,
-  spatialNodes,
-  stayingHotspots,
-  userTypeById,
-  type BehaviourSlotId,
-  type MovementFlowData,
-  type StayingHotspotData
-} from "@/lib/behaviourData";
+import { publicSpaceBoundary, type BehaviourDataset } from "@/lib/behaviorModel";
 
 export interface Behaviour3DLayerState {
   siteModel: boolean;
@@ -37,7 +26,8 @@ export type BehaviourSelection =
   | null;
 
 interface BehaviourPatternCanvasProps {
-  timeSlotId: BehaviourSlotId;
+  dataset: BehaviourDataset;
+  timeSlotId: string;
   userTypeId: string;
   layers: Behaviour3DLayerState;
   onSelect: (selection: BehaviourSelection) => void;
@@ -49,7 +39,13 @@ function toWorld(x: number, y: number) {
   return { x: (x - 50) / 11, z: (y - 58.75) / 11 };
 }
 
-export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelect }: BehaviourPatternCanvasProps) {
+export function BehaviourPatternCanvas({
+  dataset,
+  timeSlotId,
+  userTypeId,
+  layers,
+  onSelect
+}: BehaviourPatternCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
@@ -59,6 +55,11 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
     if (!canvas) {
       return;
     }
+
+    const colorOf = (id: string) =>
+      dataset.userTypes.find((u) => u.id === id)?.color ?? "#8a8a85";
+    const maxHotspotUsers = Math.max(...dataset.hotspots.map((h) => h.users), 1);
+    const maxStay = Math.max(...dataset.hotspots.map((h) => h.avgStayMinutes), 1);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf6f5f2);
@@ -84,7 +85,6 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
     fill.position.set(-5, 4, -6);
     scene.add(fill);
 
-    // Ground plane as the spatial base.
     const floor = new THREE.Mesh(
       new THREE.CircleGeometry(7, 96),
       new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 })
@@ -100,7 +100,7 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
 
     const pickables: THREE.Object3D[] = [];
 
-    // --- A. Spatial context ------------------------------------------------
+    /* --- Spatial context --- */
     if (layers.siteModel) {
       const loader = new GLTFLoader();
       loader.load(
@@ -133,7 +133,6 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
         },
         undefined,
         () => {
-          // Fallback massing keeps the building context visually secondary.
           [
             [-1.7, -1.3, 1.2, 0.55],
             [1.2, -1.5, 1.8, 0.55],
@@ -165,7 +164,7 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
     }
 
     if (layers.mainRoutes) {
-      movementFlows.forEach((flow) => {
+      dataset.flows.forEach((flow) => {
         const points = flow.path.map(([x, y]) => {
           const pos = toWorld(x, y);
           return new THREE.Vector3(pos.x, GROUND_Y + 0.01, pos.z);
@@ -179,7 +178,7 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
     }
 
     if (layers.entrances) {
-      entranceMarkers.forEach((entrance) => {
+      dataset.entrances.forEach((entrance) => {
         const pos = toWorld(entrance.x, entrance.y);
         const marker = new THREE.Mesh(
           new THREE.CylinderGeometry(0.09, 0.11, 0.18, 20),
@@ -192,7 +191,7 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
     }
 
     if (layers.keyNodes) {
-      spatialNodes.forEach((node) => {
+      dataset.nodes.forEach((node) => {
         const pos = toWorld(node.x, node.y);
         const marker = new THREE.Mesh(
           new THREE.OctahedronGeometry(0.09),
@@ -206,16 +205,16 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
       });
     }
 
-    // --- B. Behaviour data -------------------------------------------------
+    /* --- Behaviour data --- */
     const flowPulses: Array<{ mesh: THREE.Mesh; curve: THREE.CatmullRomCurve3; offset: number; speed: number }> = [];
 
     if (layers.movementFlows) {
-      movementFlows.forEach((flow) => {
-        const volume = flow.volumeBySlot[timeSlotId];
+      dataset.flows.forEach((flow) => {
+        const volume = flow.volumeBySlot[timeSlotId] ?? 0;
         const matches = userTypeId === "all" || flow.userTypeIds.includes(userTypeId);
-        const color = matches ? new THREE.Color(userTypeById(flow.dominantUserTypeId).color) : new THREE.Color(0xc9c6c0);
+        const color = matches ? new THREE.Color(colorOf(flow.dominantUserTypeId)) : new THREE.Color(0xc9c6c0);
         const opacity = matches ? 0.42 + volume * 0.5 : 0.1;
-        const width = (flow.kind === "main" ? 0.1 + volume * 0.26 : flow.kind === "service" ? 0.05 + volume * 0.1 : 0.07 + volume * 0.16);
+        const width = flow.kind === "main" ? 0.1 + volume * 0.26 : flow.kind === "service" ? 0.05 + volume * 0.1 : 0.07 + volume * 0.16;
 
         const curvePoints = flow.path.map(([x, y]) => {
           const pos = toWorld(x, y);
@@ -223,7 +222,6 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
         });
         const curve = new THREE.CatmullRomCurve3(curvePoints, false, "catmullrom", 0.2);
 
-        // Ground-hugging flow band (flattened tube).
         const tube = new THREE.Mesh(
           new THREE.TubeGeometry(curve, 48, width / 2, 8, false),
           new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false })
@@ -234,7 +232,6 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
         pickables.push(tube);
         scene.add(tube);
 
-        // Direction arrows on the ground at mid and end of the path.
         [0.55, 0.98].forEach((t) => {
           const point = curve.getPoint(t);
           const tangent = curve.getTangent(t).setY(0).normalize();
@@ -249,7 +246,6 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
           scene.add(cone);
         });
 
-        // Subtle animated pulses showing movement direction.
         if (layers.timePatterns && matches) {
           for (let i = 0; i < 2; i += 1) {
             const pulse = new THREE.Mesh(
@@ -265,16 +261,15 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
     }
 
     if (layers.stayingHotspots) {
-      stayingHotspots.forEach((hotspot) => {
-        const strength = hotspot.strengthBySlot[timeSlotId];
+      dataset.hotspots.forEach((hotspot) => {
+        const strength = hotspot.strengthBySlot[timeSlotId] ?? 0;
         const matches =
           userTypeId === "all" || hotspot.userMix.some((mix) => mix.userTypeId === userTypeId && mix.share >= 0.15);
-        const baseColor = matches ? new THREE.Color(userTypeById(hotspot.dominantUserTypeId).color) : new THREE.Color(0xc9c6c0);
-        const radius = 0.14 + (hotspot.users / 186) * 0.26;
-        const height = (hotspot.avgStayMinutes / 8.5) * 1.35 * (0.55 + strength * 0.45);
+        const baseColor = matches ? new THREE.Color(colorOf(hotspot.dominantUserTypeId)) : new THREE.Color(0xc9c6c0);
+        const radius = 0.14 + (hotspot.users / maxHotspotUsers) * 0.26;
+        const height = (hotspot.avgStayMinutes / maxStay) * 1.35 * (0.55 + strength * 0.45);
         const opacity = matches ? 0.22 + strength * 0.42 : 0.08;
 
-        // Vertical column: height = staying duration, diameter = people staying.
         const column = new THREE.Mesh(
           new THREE.CylinderGeometry(radius, radius, height, 28),
           new THREE.MeshStandardMaterial({ color: baseColor, transparent: true, opacity, roughness: 0.4 })
@@ -285,7 +280,6 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
         pickables.push(column);
         scene.add(column);
 
-        // Ground contour rings: color intensity = staying strength.
         [1.7, 2.6].forEach((multiplier, ringIndex) => {
           const ring = new THREE.Mesh(
             new THREE.CircleGeometry(radius * multiplier, 48),
@@ -303,7 +297,6 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
 
         scene.add(makeLabelSprite(hotspot.code, pos.x, GROUND_Y + height + 0.25, pos.z, "#c7502e"));
 
-        // User type distribution beads around the column.
         if (layers.userTypeDistribution) {
           let beadIndex = 0;
           hotspot.userMix.forEach((mix) => {
@@ -314,7 +307,7 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
               const bead = new THREE.Mesh(
                 new THREE.SphereGeometry(0.035, 10, 10),
                 new THREE.MeshBasicMaterial({
-                  color: new THREE.Color(userTypeById(mix.userTypeId).color),
+                  color: new THREE.Color(colorOf(mix.userTypeId)),
                   transparent: true,
                   opacity: beadMatches ? 0.95 : 0.15
                 })
@@ -333,7 +326,7 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
     }
 
     if (layers.activityPoints) {
-      activityPoints.forEach((point) => {
+      dataset.activityPoints.forEach((point) => {
         const pos = toWorld(point.x, point.y);
         const dot = new THREE.Mesh(
           new THREE.SphereGeometry(0.02, 8, 8),
@@ -344,7 +337,7 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
       });
     }
 
-    // --- Picking -----------------------------------------------------------
+    /* --- Picking --- */
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     let downX = 0;
@@ -418,7 +411,7 @@ export function BehaviourPatternCanvas({ timeSlotId, userTypeId, layers, onSelec
         }
       });
     };
-  }, [timeSlotId, userTypeId, layers]);
+  }, [dataset, timeSlotId, userTypeId, layers]);
 
   return <canvas ref={canvasRef} className="h-[620px] w-full touch-none bg-[#f6f5f2]" />;
 }

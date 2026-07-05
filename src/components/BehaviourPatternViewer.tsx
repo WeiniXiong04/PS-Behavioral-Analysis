@@ -1,21 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BehaviourPatternCanvas,
   type Behaviour3DLayerState,
   type BehaviourSelection
 } from "@/components/BehaviourPatternCanvas";
-import {
-  behaviourTimeSlots,
-  behaviourUserTypes,
-  flowById,
-  hotspotById,
-  nodeById,
-  slotSummaries,
-  userTypeById,
-  type BehaviourSlotId
-} from "@/lib/behaviourData";
+import type { BehaviourDataset } from "@/lib/behaviorModel";
 
 const baseLayerLabels: Partial<Record<keyof Behaviour3DLayerState, string>> = {
   siteModel: "Site Model",
@@ -34,11 +25,12 @@ const behaviourLayerLabels: Partial<Record<keyof Behaviour3DLayerState, string>>
 };
 
 interface BehaviourPatternViewerProps {
-  timeSlotId: BehaviourSlotId;
-  onTimeSlotChange: (id: BehaviourSlotId) => void;
+  dataset: BehaviourDataset;
+  timeSlotId: string;
+  onTimeSlotChange: (id: string) => void;
 }
 
-export function BehaviourPatternViewer({ timeSlotId, onTimeSlotChange }: BehaviourPatternViewerProps) {
+export function BehaviourPatternViewer({ dataset, timeSlotId, onTimeSlotChange }: BehaviourPatternViewerProps) {
   const [userTypeId, setUserTypeId] = useState<string>("all");
   const [selection, setSelection] = useState<BehaviourSelection>(null);
   const [layers, setLayers] = useState<Behaviour3DLayerState>({
@@ -54,10 +46,20 @@ export function BehaviourPatternViewer({ timeSlotId, onTimeSlotChange }: Behavio
     timePatterns: true
   });
 
-  const summary = slotSummaries[timeSlotId];
-  const selectedFlow = selection?.kind === "flow" ? flowById(selection.id) : null;
-  const selectedHotspot = selection?.kind === "hotspot" ? hotspotById(selection.id) : null;
-  const selectedNode = selection?.kind === "node" ? nodeById(selection.id) : null;
+  const userTypeMap = useMemo(
+    () => new Map(dataset.userTypes.map((u) => [u.id, u])),
+    [dataset.userTypes]
+  );
+  const typeOf = (id: string) => userTypeMap.get(id) ?? { id, label: "Users", color: "#8a8a85" };
+  const slotLabel = (id: string) => dataset.timeSlots.find((s) => s.id === id)?.label ?? "";
+
+  const summary = dataset.slotSummaries[timeSlotId] ?? Object.values(dataset.slotSummaries)[0];
+  const selectedFlow = selection?.kind === "flow" ? dataset.flows.find((f) => f.id === selection.id) : null;
+  const selectedHotspot =
+    selection?.kind === "hotspot" ? dataset.hotspots.find((h) => h.id === selection.id) : null;
+  const selectedNode = selection?.kind === "node" ? dataset.nodes.find((n) => n.id === selection.id) : null;
+  const mainFlow = summary ? dataset.flows.find((f) => f.id === summary.mainFlowId) : null;
+  const strongestHotspot = summary ? dataset.hotspots.find((h) => h.id === summary.strongestHotspotId) : null;
 
   function toggleLayer(key: keyof Behaviour3DLayerState) {
     setLayers((current) => ({ ...current, [key]: !current[key] }));
@@ -69,15 +71,15 @@ export function BehaviourPatternViewer({ timeSlotId, onTimeSlotChange }: Behavio
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-              3D Interactive Model
+              3D Interactive Model · computed from your configuration
             </div>
-            <h2 className="font-dot mt-2 text-3xl uppercase text-black md:text-4xl">
+            <h2 className="font-display mt-2 text-3xl text-black md:text-4xl">
               3D Behaviour Pattern Viewer
             </h2>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="glass-chip flex items-center gap-1 rounded-full p-1">
-              {behaviourTimeSlots.map((slot) => (
+            <div className="glass-chip flex flex-wrap items-center gap-1 rounded-full p-1">
+              {dataset.timeSlots.map((slot) => (
                 <button
                   key={slot.id}
                   type="button"
@@ -97,7 +99,7 @@ export function BehaviourPatternViewer({ timeSlotId, onTimeSlotChange }: Behavio
               aria-label="User type filter"
             >
               <option value="all">All Users</option>
-              {behaviourUserTypes.map((type) => (
+              {dataset.userTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.label}
                 </option>
@@ -110,13 +112,13 @@ export function BehaviourPatternViewer({ timeSlotId, onTimeSlotChange }: Behavio
       <div className="grid gap-5 xl:grid-cols-[1fr_330px]">
         <div className="liquid-surface relative overflow-hidden rounded-[2rem]">
           <BehaviourPatternCanvas
+            dataset={dataset}
             timeSlotId={timeSlotId}
             userTypeId={userTypeId}
             layers={layers}
             onSelect={setSelection}
           />
 
-          {/* Legend */}
           <div className="liquid-soft absolute bottom-3 left-3 max-w-[230px] rounded-[1.1rem] p-3 text-[11px] leading-4 text-black/70">
             <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-black/45">Legend</div>
             <div className="grid gap-1">
@@ -126,7 +128,7 @@ export function BehaviourPatternViewer({ timeSlotId, onTimeSlotChange }: Behavio
               <span>Large hotspot = high staying frequency</span>
               <span>Colour = user type</span>
               <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5">
-                {behaviourUserTypes.map((type) => (
+                {dataset.userTypes.map((type) => (
                   <span key={type.id} className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full" style={{ background: type.color }} />
                     {type.label}
@@ -137,66 +139,63 @@ export function BehaviourPatternViewer({ timeSlotId, onTimeSlotChange }: Behavio
           </div>
         </div>
 
-        {/* Behaviour Data Panel */}
         <div className="grid content-start gap-4">
           <div className="liquid-surface rounded-[1.6rem] p-5">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Behaviour Data Panel</div>
             <dl className="mt-3 grid gap-2 text-sm">
               <SummaryRow label="Current View" value="Behaviour View" />
-              <SummaryRow
-                label="Time Slot"
-                value={behaviourTimeSlots.find((slot) => slot.id === timeSlotId)?.label ?? ""}
-              />
+              <SummaryRow label="Time Slot" value={slotLabel(timeSlotId)} />
               <SummaryRow
                 label="Selected User Type"
-                value={userTypeId === "all" ? "All Users" : userTypeById(userTypeId).label}
+                value={userTypeId === "all" ? "All Users" : typeOf(userTypeId).label}
               />
             </dl>
           </div>
 
-          <div className="liquid-soft rounded-[1.6rem] p-5">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Core Data Summary</div>
-            <dl className="mt-3 grid gap-2 text-sm">
-              <SummaryRow label="Total Observed Users" value={summary.observedUsers.toLocaleString()} />
-              <SummaryRow label="Main User Type" value={userTypeById(summary.dominantUserTypeId).label} />
-              <SummaryRow
-                label="Peak Movement Route"
-                value={`${flowById(summary.mainFlowId).code} ${flowById(summary.mainFlowId).name}`}
-              />
-              <SummaryRow
-                label="Highest Staying Area"
-                value={`${hotspotById(summary.strongestHotspotId).code} ${hotspotById(summary.strongestHotspotId).name}`}
-              />
-              <SummaryRow label="Average Staying Duration" value={`${summary.avgStayMinutes.toFixed(1)} min`} />
-              <SummaryRow label="Most Active Time" value={summary.mostActiveTimeLabel} />
-            </dl>
-          </div>
-
-          <div className="liquid-soft rounded-[1.6rem] p-5">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">User Type Share</div>
-            <div className="mt-3 grid gap-2">
-              {summary.userMix.map((mix) => {
-                const type = userTypeById(mix.userTypeId);
-                return (
-                  <div key={mix.userTypeId} className="grid gap-1">
-                    <div className="flex items-center justify-between text-xs text-black/60">
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full" style={{ background: type.color }} />
-                        {type.label}
-                      </span>
-                      <span className="font-semibold text-black/80">{Math.round(mix.share * 100)}%</span>
-                    </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-white/50">
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${mix.share * 100}%`, background: type.color }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+          {summary && (
+            <div className="liquid-soft rounded-[1.6rem] p-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Core Data Summary</div>
+              <dl className="mt-3 grid gap-2 text-sm">
+                <SummaryRow label="Total Observed Users" value={summary.observedUsers.toLocaleString()} />
+                <SummaryRow label="Main User Type" value={typeOf(summary.dominantUserTypeId).label} />
+                <SummaryRow label="Peak Movement Route" value={mainFlow ? `${mainFlow.code} ${mainFlow.name}` : "—"} />
+                <SummaryRow
+                  label="Highest Staying Area"
+                  value={strongestHotspot ? `${strongestHotspot.code} ${strongestHotspot.name}` : "—"}
+                />
+                <SummaryRow label="Average Staying Duration" value={`${summary.avgStayMinutes.toFixed(1)} min`} />
+                <SummaryRow label="Most Active Time" value={summary.mostActiveTimeLabel} />
+              </dl>
             </div>
-          </div>
+          )}
+
+          {summary && (
+            <div className="liquid-soft rounded-[1.6rem] p-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">User Type Share</div>
+              <div className="mt-3 grid gap-2">
+                {summary.userMix.map((mix) => {
+                  const type = typeOf(mix.userTypeId);
+                  return (
+                    <div key={mix.userTypeId} className="grid gap-1">
+                      <div className="flex items-center justify-between text-xs text-black/60">
+                        <span className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full" style={{ background: type.color }} />
+                          {type.label}
+                        </span>
+                        <span className="font-semibold text-black/80">{Math.round(mix.share * 100)}%</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-white/50">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${mix.share * 100}%`, background: type.color }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {(selectedFlow || selectedHotspot || selectedNode) && (
             <div className="liquid-surface rounded-[1.6rem] p-5">
@@ -214,12 +213,9 @@ export function BehaviourPatternViewer({ timeSlotId, onTimeSlotChange }: Behavio
                 <dl className="mt-3 grid gap-2 text-sm">
                   <SummaryRow label="Flow" value={`${selectedFlow.code} ${selectedFlow.name}`} />
                   <SummaryRow label="Volume" value={selectedFlow.volumeLabel} />
-                  <SummaryRow label="Dominant User" value={userTypeById(selectedFlow.dominantUserTypeId).label} />
+                  <SummaryRow label="Dominant User" value={typeOf(selectedFlow.dominantUserTypeId).label} />
                   <SummaryRow label="Average Speed" value={selectedFlow.avgSpeed} />
-                  <SummaryRow
-                    label="Peak Time"
-                    value={behaviourTimeSlots.find((slot) => slot.id === selectedFlow.peakSlotId)?.label ?? ""}
-                  />
+                  <SummaryRow label="Peak Time" value={slotLabel(selectedFlow.peakSlotId)} />
                   <p className="mt-1 text-sm leading-6 text-black/60">{selectedFlow.meaning}</p>
                 </dl>
               )}
@@ -228,11 +224,8 @@ export function BehaviourPatternViewer({ timeSlotId, onTimeSlotChange }: Behavio
                   <SummaryRow label="Hotspot" value={`${selectedHotspot.code} ${selectedHotspot.name}`} />
                   <SummaryRow label="Average Staying Duration" value={`${selectedHotspot.avgStayMinutes} min`} />
                   <SummaryRow label="Dominant Behaviour" value={selectedHotspot.dominantBehaviour} />
-                  <SummaryRow label="Dominant User" value={userTypeById(selectedHotspot.dominantUserTypeId).label} />
-                  <SummaryRow
-                    label="Peak Time"
-                    value={behaviourTimeSlots.find((slot) => slot.id === selectedHotspot.peakSlotId)?.label ?? ""}
-                  />
+                  <SummaryRow label="Dominant User" value={typeOf(selectedHotspot.dominantUserTypeId).label} />
+                  <SummaryRow label="Peak Time" value={slotLabel(selectedHotspot.peakSlotId)} />
                   <p className="mt-1 text-sm leading-6 text-black/60">{selectedHotspot.meaning}</p>
                 </dl>
               )}

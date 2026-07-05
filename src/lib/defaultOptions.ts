@@ -44,5 +44,6 @@ export const defaultActivities: ActivityOption[] = [
 export const defaultTimeSlots = [
   { id: "morning", label: "Morning peak", start: "08:00", end: "10:00" },
   { id: "lunch", label: "Lunch peak", start: "12:00", end: "14:00" },
+  { id: "afternoon", label: "Afternoon", start: "14:00", end: "17:00" },
   { id: "evening", label: "Evening peak", start: "17:00", end: "19:00" }
 ];

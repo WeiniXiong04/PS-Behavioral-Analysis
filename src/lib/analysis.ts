@@ -15,17 +15,27 @@ import type {
   UserTypePoint
 } from "@/types";
 
+// Default TusPark configuration used when the visitor has not (yet) built
+// their own configuration on the Configure pages.
 const fallbackMarkers: PlanMarker[] = [
-  { id: "fallback-entrance", type: "entrance", x: 50, y: 92, label: "Entrance" },
-  { id: "fallback-exit", type: "exit", x: 12, y: 14, label: "Exit" },
-  { id: "fallback-program", type: "program", x: 56, y: 34, programId: "plaza", label: "Plaza" },
-  { id: "fallback-program-2", type: "program", x: 38, y: 49, programId: "seating-area", label: "Seating area" }
+  { id: "fallback-e1", type: "entrance", x: 88, y: 53, label: "Main Entrance" },
+  { id: "fallback-e2", type: "entrance", x: 46, y: 90, label: "Street Entrance" },
+  { id: "fallback-e3", type: "entrance", x: 38, y: 19, label: "Office Lobby Entrance" },
+  { id: "fallback-e4", type: "entrance", x: 10, y: 66, label: "Service Entrance" },
+  { id: "fallback-x1", type: "exit", x: 66, y: 27, label: "North Exit" },
+  { id: "fallback-x2", type: "exit", x: 30, y: 84, label: "South Exit" },
+  { id: "fallback-p1", type: "program", x: 52, y: 49, programId: "plaza", label: "Central Plaza" },
+  { id: "fallback-p2", type: "program", x: 60, y: 61, programId: "seating-area", label: "Seating Strip" },
+  { id: "fallback-p3", type: "program", x: 44, y: 42, programId: "cafe", label: "Courtyard Cafe" },
+  { id: "fallback-p4", type: "program", x: 24, y: 53, programId: "green-space", label: "Landscape Edge" },
+  { id: "fallback-p5", type: "program", x: 40, y: 30, programId: "office-entrance", label: "Office Forecourt" },
+  { id: "fallback-p6", type: "program", x: 56, y: 76, programId: "transit-connection", label: "Transit Link" }
 ];
 
 export function createFallbackInputs(): ScaleInputs {
   return {
-    userTypes: defaultUserTypes.slice(0, 4),
-    programs: defaultPrograms.slice(0, 5),
+    userTypes: defaultUserTypes.slice(0, 6),
+    programs: defaultPrograms.slice(0, 10),
     activities: defaultActivities.slice(0, 6),
     markers: fallbackMarkers,
     operationHours: { opening: "08:00", closing: "22:00" },
