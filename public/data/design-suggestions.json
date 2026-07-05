@@ -1,0 +1,20 @@
+[
+  {
+    "id": "suggestion-01",
+    "zoneId": "inactive-01",
+    "strategy": "Increase optional staying",
+    "actions": ["Add shaded seating", "Place small work-friendly tables", "Improve path visibility from the north edge"]
+  },
+  {
+    "id": "suggestion-02",
+    "zoneId": "congested-01",
+    "strategy": "Separate speeds",
+    "actions": ["Create a clear through-route", "Keep social seating outside the route desire line", "Use paving contrast to guide movement"]
+  },
+  {
+    "id": "suggestion-03",
+    "zoneId": "congested-02",
+    "strategy": "Increase corridor capacity",
+    "actions": ["Reduce edge obstacles", "Add a parallel slow movement strip", "Move waiting points away from the narrowest section"]
+  }
+]

@@ -1,0 +1,43 @@
+[
+  {
+    "id": "inactive-01",
+    "name": "North Lawn Edge",
+    "activityScore": 24,
+    "issue": "Low staying behaviour and weak visual attraction despite good open space.",
+    "suggestion": "Add shaded seating, small program nodes, and clearer pedestrian links to the northern building edge.",
+    "polygon": [
+      [575, 210],
+      [760, 215],
+      [765, 320],
+      [610, 340],
+      [555, 285]
+    ]
+  },
+  {
+    "id": "inactive-02",
+    "name": "East Pocket Lawn",
+    "activityScore": 28,
+    "issue": "The lawn is visible but disconnected from the dominant diagonal movement flow.",
+    "suggestion": "Introduce a secondary path, movable chairs, and a small social node to turn passing movement into optional staying.",
+    "polygon": [
+      [650, 475],
+      [795, 470],
+      [795, 610],
+      [675, 620],
+      [635, 540]
+    ]
+  },
+  {
+    "id": "inactive-03",
+    "name": "South Retail Edge",
+    "activityScore": 31,
+    "issue": "Retail frontage has limited dwell time because seating and shade are fragmented.",
+    "suggestion": "Consolidate benches, add canopy shade, and improve visual cues from the main entrance corridor.",
+    "polygon": [
+      [610, 780],
+      [780, 785],
+      [785, 900],
+      [620, 890]
+    ]
+  }
+]
