@@ -550,9 +550,22 @@ export function buildBehaviourDataset(
   });
   candidates.sort((a, b) => b.peak - a.peak);
 
-  const flowCount = Math.min(5, candidates.length);
-  const maxPeak = candidates[0]?.peak || 1;
-  const flows: MovementFlowOut[] = candidates.slice(0, flowCount).map((cand, i) => {
+  // Keep the flow map readable: at most 2 flows per destination area and per
+  // entrance, so one dominant area cannot absorb every displayed flow.
+  const perArea = new Map<number, number>();
+  const perEntrance = new Map<number, number>();
+  const diverse: FlowCandidate[] = [];
+  for (const cand of candidates) {
+    if (diverse.length >= 5) break;
+    if ((perArea.get(cand.areaIndex) ?? 0) >= 2) continue;
+    if ((perEntrance.get(cand.entranceIndex) ?? 0) >= 2) continue;
+    perArea.set(cand.areaIndex, (perArea.get(cand.areaIndex) ?? 0) + 1);
+    perEntrance.set(cand.entranceIndex, (perEntrance.get(cand.entranceIndex) ?? 0) + 1);
+    diverse.push(cand);
+  }
+
+  const maxPeak = diverse[0]?.peak || 1;
+  const flows: MovementFlowOut[] = diverse.map((cand, i) => {
     const entrance = accessMarkers[cand.entranceIndex];
     const area = areaScores[cand.areaIndex];
     const areaPos = areaPositions.get(area.areaId)!;
@@ -569,8 +582,8 @@ export function buildBehaviourDataset(
     const from = { x: entrance.x, y: entrance.y * PLAN_Y };
     const to = { x: areaPos.x, y: areaPos.y * PLAN_Y };
     const mid = {
-      x: (from.x + to.x) / 2 + Math.sin(i * 1.7 + 1) * 5,
-      y: (from.y + to.y) / 2 + Math.cos(i * 1.3 + 2) * 4
+      x: round((from.x + to.x) / 2 + Math.sin(i * 1.7 + 1) * 5, 2),
+      y: round((from.y + to.y) / 2 + Math.cos(i * 1.3 + 2) * 4, 2)
     };
 
     // Dominant user type at the peak slot.
@@ -586,7 +599,7 @@ export function buildBehaviourDataset(
     // Normalise volumes for display (0..1 against overall max).
     const volumeBySlot: Record<string, number> = {};
     Object.entries(cand.volumeBySlot).forEach(([sid, v]) => {
-      volumeBySlot[sid] = clamp01(v / maxPeak);
+      volumeBySlot[sid] = round(clamp01(v / maxPeak));
     });
 
     return {
@@ -645,7 +658,7 @@ export function buildBehaviourDataset(
     });
     const maxStrength = Math.max(...Object.values(strengthBySlot), 0.001);
     Object.keys(strengthBySlot).forEach((sid) => {
-      strengthBySlot[sid] = clamp01(strengthBySlot[sid] / maxStrength) * (0.4 + 0.6 * (1 - i / 5));
+      strengthBySlot[sid] = round(clamp01(strengthBySlot[sid] / maxStrength) * (0.4 + 0.6 * (1 - i / 5)));
     });
 
     // User mix at this hotspot: user slot activity at its peak, normalised.
@@ -660,7 +673,7 @@ export function buildBehaviourDataset(
       .sort((a, b) => b.share - a.share)
       .slice(0, 4);
     const mixTotal = userMix.reduce((s, m) => s + m.share, 0) || 1;
-    userMix.forEach((m) => (m.share = m.share / mixTotal));
+    userMix.forEach((m) => (m.share = round(m.share / mixTotal)));
 
     const avgProb =
       slots.reduce((s, slot) => s + (slotAreaProb.get(slot.id)![areaIndex] ?? 0), 0) /
@@ -692,8 +705,8 @@ export function buildBehaviourDataset(
       const radius = 2 + ((i * 37 + hi * 17) % 100) / 100 * 6.5;
       return {
         id: `${h.id}-pt-${i}`,
-        x: Math.min(96, Math.max(4, h.x + Math.cos(angle) * radius)),
-        y: Math.min(113, Math.max(4, h.y + Math.sin(angle) * radius * 0.85))
+        x: round(Math.min(96, Math.max(4, h.x + Math.cos(angle) * radius)), 2),
+        y: round(Math.min(113, Math.max(4, h.y + Math.sin(angle) * radius * 0.85)), 2)
       };
     })
   );
@@ -710,7 +723,7 @@ export function buildBehaviourDataset(
     }));
     const totalUA = userActivity.reduce((s, a) => s + a.value, 0) || 1;
     const userMix = userActivity
-      .map((a) => ({ userTypeId: a.userTypeId, share: a.value / totalUA }))
+      .map((a) => ({ userTypeId: a.userTypeId, share: round(a.value / totalUA) }))
       .sort((a, b) => b.share - a.share);
 
     const mainFlow =
@@ -776,6 +789,17 @@ export function buildBehaviourDataset(
 
 function clamp01(v: number) {
   return Math.max(0, Math.min(1, v));
+}
+
+/**
+ * Round to a fixed number of decimals. Transcendental functions (sin/exp) can
+ * differ in the last bit between Node and the browser, which would make the
+ * server-rendered SVG differ from the client render (hydration mismatch).
+ * Rounding every value that reaches the DOM keeps both sides identical.
+ */
+function round(v: number, decimals = 4) {
+  const f = 10 ** decimals;
+  return Math.round(v * f) / f;
 }
 
 /**

@@ -1,3 +1,5 @@
+import { PlanImage } from "@/components/PlanImage";
+
 interface MasterplanPreviewProps {
   compact?: boolean;
   loaded?: boolean;
@@ -16,10 +18,11 @@ export function MasterplanPreview({ compact = false, loaded = true }: Masterplan
       </div>
       <div className={`bg-white/25 ${compact ? "aspect-[1000/1175] w-full" : "h-[660px]"}`}>
         {loaded ? (
-          <img
-            src="/images/masterplan.png"
+          <PlanImage
+            src="/assets/masterplan.png"
             alt="Masterplan preview"
             className="h-full w-full object-contain p-4"
+            assetHint="Missing masterplan — place masterplan.png in public/assets/"
           />
         ) : (
           <div className="grid h-full place-items-center">

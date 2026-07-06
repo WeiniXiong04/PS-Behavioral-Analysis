@@ -41,7 +41,6 @@ export function ScaleForm() {
   useEffect(() => {
     const savedInputs = window.localStorage.getItem(storageKeys.scaleInputs);
     const savedCoefficients = window.localStorage.getItem(storageKeys.modelCoefficients);
-    const savedModelLoaded = window.localStorage.getItem(storageKeys.modelLoaded);
 
     if (savedInputs) {
       try {
@@ -65,11 +64,7 @@ export function ScaleForm() {
         window.localStorage.removeItem(storageKeys.modelCoefficients);
       }
     }
-
-    if (savedModelLoaded === "true") {
-      setLoadState("loaded");
-      setProgress(100);
-    }
+    // Previews always start blank: the model must be loaded explicitly.
   }, []);
 
   const statusText = useMemo(() => {
@@ -132,8 +127,8 @@ export function ScaleForm() {
   }
 
   return (
-    <main className="mx-auto grid max-w-7xl gap-5 px-4 py-8">
-      <section className="grid gap-5 xl:grid-cols-[0.72fr_1.28fr]">
+    <main className="mx-auto grid w-full max-w-[1720px] gap-5 px-4 py-8 2xl:px-8">
+      <section className="grid gap-5 xl:grid-cols-[minmax(340px,0.55fr)_1fr_1.15fr]">
         <div className="liquid-surface rounded-[2rem] p-5">
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">
             Configure / model source
@@ -178,10 +173,8 @@ export function ScaleForm() {
           </div>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[0.75fr_1.25fr]">
-          <ModelPreview compact loaded={loadState === "loaded"} />
-          <MasterplanPreview compact loaded={loadState === "loaded"} />
-        </div>
+        <ModelPreview compact loaded={loadState === "loaded"} />
+        <MasterplanPreview compact loaded={loadState === "loaded"} />
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1fr_1.12fr]">
@@ -269,14 +262,16 @@ export function ScaleForm() {
       </div>
 
       <div className="grid content-start gap-5">
-        <PlanIdentification markers={markers} programs={programs} onChange={setMarkers} />
+        <PlanIdentification markers={markers} programs={programs} onChange={setMarkers} loaded={loadState === "loaded"} />
         <div className="liquid-surface sticky bottom-4 rounded-full p-2">
           <button
             type="button"
             onClick={runAnalysis}
             disabled={!isReady}
-            className={`flex h-14 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold transition ${
-              isReady ? "bg-black text-white hover:scale-[1.01]" : "cursor-not-allowed bg-black/10 text-black/35"
+            className={`glass-chip flex h-14 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold transition ${
+              isReady
+                ? "text-black hover:scale-[1.01] hover:border-black/25"
+                : "cursor-not-allowed text-black/30"
             }`}
           >
             Run Analysis <ArrowUpRight size={18} />

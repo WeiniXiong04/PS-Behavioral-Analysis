@@ -19,6 +19,7 @@ const baseLayerLabels: Partial<Record<keyof Behaviour3DLayerState, string>> = {
 const behaviourLayerLabels: Partial<Record<keyof Behaviour3DLayerState, string>> = {
   movementFlows: "Movement Flows",
   stayingHotspots: "Staying Hotspots",
+  congestion: "Congestion / Crowding",
   userTypeDistribution: "User Type Distribution",
   activityPoints: "Activity Points",
   timePatterns: "Time-based Patterns"
@@ -43,7 +44,8 @@ export function BehaviourPatternViewer({ dataset, timeSlotId, onTimeSlotChange }
     stayingHotspots: true,
     userTypeDistribution: true,
     activityPoints: false,
-    timePatterns: true
+    timePatterns: true,
+    congestion: true
   });
 
   const userTypeMap = useMemo(
@@ -126,6 +128,9 @@ export function BehaviourPatternViewer({ dataset, timeSlotId, onTimeSlotChange }
               <span>Arrow = movement direction</span>
               <span>Tall column = long staying duration</span>
               <span>Large hotspot = high staying frequency</span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-[#e35d4f]" /> Warm disc = congestion pressure
+              </span>
               <span>Colour = user type</span>
               <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5">
                 {dataset.userTypes.map((type) => (

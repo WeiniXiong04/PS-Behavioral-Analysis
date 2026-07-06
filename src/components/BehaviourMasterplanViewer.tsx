@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PlanImage } from "@/components/PlanImage";
 import { publicSpaceBoundary, type BehaviourDataset } from "@/lib/behaviorModel";
 
 interface MasterplanLayerState {
@@ -116,8 +117,8 @@ export function BehaviourMasterplanViewer({
           <div className="bg-white/20 p-4">
             <div className="relative mx-auto aspect-[1000/1175] max-h-[86vh] overflow-hidden rounded-[1.5rem] bg-white/40 shadow-inner backdrop-blur-xl">
               {layers.basePlan && (
-                <img
-                  src="/images/masterplan.png"
+                <PlanImage
+                  src="/assets/masterplan.png"
                   alt="TusPark masterplan base"
                   className="absolute inset-0 h-full w-full object-contain opacity-35 grayscale"
                 />
@@ -470,14 +471,16 @@ interface PieMarkerProps {
 
 function PieMarker({ x, y, radius, mix, highlightId, colorOf }: PieMarkerProps) {
   const slices = useMemo(() => {
+    // Coordinates rounded to 3dp so SSR and client markup match exactly.
+    const r3 = (v: number) => Math.round(v * 1000) / 1000;
     let start = -Math.PI / 2;
     return mix.map((entry) => {
       const end = start + entry.share * Math.PI * 2;
       const largeArc = entry.share > 0.5 ? 1 : 0;
-      const sx = x + Math.cos(start) * radius;
-      const sy = y + Math.sin(start) * radius;
-      const ex = x + Math.cos(end) * radius;
-      const ey = y + Math.sin(end) * radius;
+      const sx = r3(x + Math.cos(start) * radius);
+      const sy = r3(y + Math.sin(start) * radius);
+      const ex = r3(x + Math.cos(end) * radius);
+      const ey = r3(y + Math.sin(end) * radius);
       const d = `M ${x} ${y} L ${sx} ${sy} A ${radius} ${radius} 0 ${largeArc} 1 ${ex} ${ey} Z`;
       start = end;
       return { d, userTypeId: entry.userTypeId };

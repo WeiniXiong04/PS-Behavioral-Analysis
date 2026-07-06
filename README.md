@@ -1,75 +1,90 @@
 # Public Space Behavior Analysis Platform
 
-An interactive front-end prototype for architecture and urban-design analysis. The platform lets a designer load a public-space model, configure users and programs, identify entrances/exits on a masterplan, and generate computed behavioural outputs as both plan overlays and a 3D model view.
+An interactive front-end prototype for architects and urban designers. Load a
+public-space 3D model (test site: TusPark), configure user types, programs,
+activities, entrances/exits and operating hours — then explore **computed**
+behavioural outputs: movement flows, staying hotspots, congestion, user-type
+distribution and time-slot variation, on both an annotated masterplan and an
+interactive 3D model. A drag-and-drop Optimization page previews design
+interventions and their estimated behavioural impact.
 
-## Features
+Fully client-side: no backend, no database, no external APIs.
 
-- Light, premium spatial interface with glass panels, pill controls, and cursor-reactive motion.
-- Four-page information architecture: Home, Configure, Analysis, Methodology.
-- Configure page as the single source of truth for:
-  - 3D model loading state
-  - user types
-  - programs
-  - activities
-  - entrances, exits, and program markers
-  - operating hours and time slots
-  - behavioural model coefficients
-- Client-side behavioural model engine:
-  - regional raw score
-  - dynamic entrance/exit weight
-  - softmax choice probability
-- Analysis page with computed masterplan and 3D overlays.
-- C-index validation readout against a mock observed reference dataset.
-- No backend, database, paid service, or deployment dependency.
+## Run it locally
 
-## Local Setup
-
-Install dependencies:
+Requires [Node.js](https://nodejs.org) 18.18 or newer.
 
 ```bash
 npm install
-```
-
-Run the development server:
-
-```bash
 npm run dev
 ```
 
-Open the local URL shown in the terminal, usually:
+Then open http://localhost:3000.
 
-```text
-http://localhost:3000
-```
-
-Run type checking:
+Other commands:
 
 ```bash
-npm run typecheck
+npm run build      # production build
+npm run start      # serve the production build
+npm run typecheck  # TypeScript check
 ```
 
-Build the production version locally:
+## Asset files
 
-```bash
-npm run build
-```
+The site assets live in `public/assets/` (already included in this repo):
 
-Start the production build locally:
+| File | Purpose |
+| --- | --- |
+| `public/assets/site-model.glb` | TusPark 3D site model |
+| `public/assets/masterplan.png` | Masterplan base image |
+| `public/assets/softmax-formula.png` | Softmax formula image (Methodology page) |
 
-```bash
-npm run start
-```
+If a file is missing the app shows a clean empty state and logs exactly which
+file to place where — it never hard-crashes.
 
-## Project Structure
+## Pages
 
-- `src/app/page.tsx` - Home / landing page
-- `src/app/scale/page.tsx` - Configure page
-- `src/app/output/page.tsx` - Analysis / results page
-- `src/app/methodology/page.tsx` - Methodology explanation
-- `src/lib/behaviorModel.ts` - pure client-side behavioural model engine
-- `public/models` - 3D model files
-- `public/images` - masterplan and heatmap images
+- **Home** — introduction and entry point, with the signature cursor/grid
+  interaction.
+- **Configure** (`/scale`) — the single source of truth: load the model, define
+  user types / programs / activities / entrances / exits / operating hours /
+  time slots, and tune the behaviour-model coefficients. Previews stay blank
+  until you press **Load Model**.
+- **Analysis** (`/output`) — Behaviour Masterplan Overview + 3D Behaviour
+  Pattern Viewer, all recomputed live from the configuration. Includes a
+  C-index validation readout against a mock observed dataset.
+- **Optimization** (`/optimization-effects`) — drag one of five intervention
+  modules (Seating, Shade/Canopy, Path Widening, Activity Node, Landscape
+  Buffer) into predefined zones A–E and read the estimated, scenario-based
+  behavioural impact.
+- **Methodology** (`/methodology`) — the three-step behavioural model explained
+  (regional raw score → dynamic entrance weight → softmax choice probability).
+
+## Behavioural model
+
+All outputs come from one documented module of pure functions:
+`src/lib/behaviorModel.ts`.
+
+1. **Regional raw score** — each program area scores on area size, facilities,
+   environmental quality and traffic convenience.
+2. **Dynamic entrance weight** —
+   `W = w̄ × (1 + c_q (n − 1)) × d` (distance-weighted mean of connected area
+   scores, boosted by the number of connected areas, scaled by a discount
+   factor).
+3. **Softmax choice probability** — scores become pedestrian choice
+   probabilities; the temperature τ controls contrast.
+
+The three coefficients (quantity coefficient, discount factor, temperature) are
+tunable on the Configure page and everything downstream recomputes instantly.
+
+## Tech stack
+
+Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · three.js ·
+KaTeX
 
 ## Notes
 
-The project is designed as a source-code prototype. It is not configured for hosting in this task. If the GitHub repository is public, the code will be visible to others; to make it private, open the repository settings on GitHub and change the visibility under the Danger Zone section.
+This is a source-code prototype; it is intentionally not configured for
+hosting. If the GitHub repository is public, the code is visible to others; to
+make it private, open the repository settings on GitHub and change the
+visibility under the Danger Zone section.

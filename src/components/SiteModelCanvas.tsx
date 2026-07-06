@@ -90,7 +90,7 @@ export function SiteModelCanvas({
     let modelRoot: THREE.Object3D | null = null;
     const loader = new GLTFLoader();
     loader.load(
-      "/models/site-model.glb",
+      "/assets/site-model.glb",
       (gltf) => {
         if (!layers.siteModel) {
           return;

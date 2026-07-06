@@ -1,4 +1,14 @@
+import katex from "katex";
+import "katex/dist/katex.min.css";
+import { PlanImage } from "@/components/PlanImage";
 import { defaultCoefficients } from "@/lib/behaviorModel";
+
+/** Server-side KaTeX typesetting for non-image formulas. */
+function Formula({ tex }: { tex: string }) {
+  const html = katex.renderToString(tex, { throwOnError: false, displayMode: true });
+  // eslint-disable-next-line react/no-danger
+  return <div className="overflow-x-auto py-1" dangerouslySetInnerHTML={{ __html: html }} />;
+}
 
 const steps = [
   {
@@ -71,11 +81,15 @@ export default function MethodologyPage() {
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
             Entrance weighting formula
           </div>
-          <div className="mt-6 rounded-[1.5rem] bg-white/35 p-5 text-sm leading-7 text-black/70">
-            <p className="font-semibold text-black">Entrance weight =</p>
-            <p className="mt-2">
-              weighted average weight x (1 + connected area quantity coefficient x
-              (number of connected areas - 1)) x entrance discount factor
+          <div className="mt-6 rounded-[1.5rem] bg-white/45 p-5 text-sm leading-7 text-black/70">
+            <Formula tex="W_{e} = \bar{w} \times \bigl(1 + c_{q}\,(n_{\text{areas}} - 1)\bigr) \times d_{e}" />
+            <p className="mt-3">
+              <span className="font-semibold text-black">W<sub>e</sub></span> entrance weight ·{" "}
+              <span className="font-semibold text-black">w̄</span> distance-weighted average score of
+              connected areas · <span className="font-semibold text-black">c<sub>q</sub></span>{" "}
+              connected-area quantity coefficient ·{" "}
+              <span className="font-semibold text-black">n</span> number of connected areas ·{" "}
+              <span className="font-semibold text-black">d<sub>e</sub></span> entrance discount factor.
             </p>
           </div>
         </article>
@@ -84,11 +98,17 @@ export default function MethodologyPage() {
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
             Softmax probability
           </div>
-          <div className="mt-6 rounded-[1.5rem] bg-white/35 p-5 text-sm leading-7 text-black/70">
-            <p className="font-semibold text-black">softmax(x_i) = exp(x_i / tau) / sum exp(x_j / tau)</p>
-            <p className="mt-2">
-              A lower temperature creates more contrast and stronger attraction to high-scoring
-              areas. A higher temperature distributes pedestrians more evenly.
+          <div className="mt-6 rounded-[1.5rem] bg-white/45 p-5 text-sm leading-7 text-black/70">
+            <PlanImage
+              src="/assets/softmax-formula.png"
+              alt="softmax(x_i) = e^(x_i) / sum_j e^(x_j)"
+              className="mx-auto h-24 object-contain"
+              assetHint="Missing formula image — place softmax-formula.png in public/assets/"
+            />
+            <p className="mt-3">
+              Scores are divided by the temperature τ before the softmax. A lower temperature creates
+              more contrast and stronger attraction to high-scoring areas; a higher temperature
+              distributes pedestrians more evenly.
             </p>
           </div>
         </article>

@@ -4,7 +4,8 @@ export const storageKeys = {
   modelLoaded: "psbat:model-loaded",
   scaleInputs: "psbat:scale-inputs",
   generatedOverlay: "psbat:generated-overlay",
-  modelCoefficients: "psbat:model-coefficients"
+  modelCoefficients: "psbat:model-coefficients",
+  interventions: "psbat:interventions"
 };
 
 export const defaultUserTypes: UserTypeOption[] = [

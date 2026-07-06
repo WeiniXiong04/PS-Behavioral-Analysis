@@ -57,7 +57,7 @@ export function OutputExperience() {
   const cIndex = dataset.diagnostics.cIndex;
 
   return (
-    <main className="mx-auto grid max-w-7xl gap-8 px-4 py-8">
+    <main className="mx-auto grid w-full max-w-[1720px] gap-8 px-4 py-8 2xl:px-8">
       <section className="liquid-surface rounded-[2rem] p-6">
         <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>

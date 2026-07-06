@@ -2,12 +2,15 @@
 
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { PlanImage } from "@/components/PlanImage";
 import type { MarkerType, PlanMarker, ProgramOption } from "@/types";
 
 interface PlanIdentificationProps {
   markers: PlanMarker[];
   programs: ProgramOption[];
   onChange: (markers: PlanMarker[]) => void;
+  /** Until the model is loaded the plan stays blank and cannot be annotated. */
+  loaded?: boolean;
 }
 
 const markerLabels: Record<MarkerType, string> = {
@@ -16,11 +19,14 @@ const markerLabels: Record<MarkerType, string> = {
   program: "Program"
 };
 
-export function PlanIdentification({ markers, programs, onChange }: PlanIdentificationProps) {
+export function PlanIdentification({ markers, programs, onChange, loaded = true }: PlanIdentificationProps) {
   const [markerType, setMarkerType] = useState<MarkerType>("entrance");
   const [programId, setProgramId] = useState(programs[0]?.id ?? "");
 
   function placeMarker(event: React.MouseEvent<HTMLDivElement>) {
+    if (!loaded) {
+      return;
+    }
     const rect = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
@@ -88,10 +94,23 @@ export function PlanIdentification({ markers, programs, onChange }: PlanIdentifi
       </div>
 
       <div
-        className="relative aspect-[1000/1175] cursor-crosshair overflow-hidden rounded-[1.5rem] border border-black/10 bg-[#f5f4f1]"
+        className={`relative aspect-[1000/1175] overflow-hidden rounded-[1.5rem] border border-black/10 bg-white/30 ${
+          loaded ? "cursor-crosshair" : ""
+        }`}
         onClick={placeMarker}
       >
-        <img src="/images/masterplan.png" alt="Plan identification base" className="h-full w-full object-fill" />
+        {loaded ? (
+          <PlanImage src="/assets/masterplan.png" alt="Plan identification base" className="h-full w-full object-fill" />
+        ) : (
+          <div className="grid h-full place-items-center">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-16 w-24 rounded-[1.25rem] border border-dashed border-black/20 bg-white/70" />
+              <div className="text-sm font-semibold text-black/45">
+                Plan identification appears after loading the model
+              </div>
+            </div>
+          </div>
+        )}
         {markers.map((marker, index) => (
           <div
             key={marker.id}

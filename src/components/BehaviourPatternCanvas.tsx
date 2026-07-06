@@ -17,6 +17,7 @@ export interface Behaviour3DLayerState {
   userTypeDistribution: boolean;
   activityPoints: boolean;
   timePatterns: boolean;
+  congestion: boolean;
 }
 
 export type BehaviourSelection =
@@ -65,7 +66,10 @@ export function BehaviourPatternCanvas({
     scene.background = new THREE.Color(0xf6f5f2);
 
     const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 1000);
-    camera.position.set(7.4, 6.2, 8.6);
+    // Gentle entrance: ease from a wider, higher framing into the working view.
+    const cameraFrom = new THREE.Vector3(11.5, 10.5, 13.5);
+    const cameraTo = new THREE.Vector3(7.4, 6.2, 8.6);
+    camera.position.copy(cameraFrom);
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -104,7 +108,7 @@ export function BehaviourPatternCanvas({
     if (layers.siteModel) {
       const loader = new GLTFLoader();
       loader.load(
-        "/models/site-model.glb",
+        "/assets/site-model.glb",
         (gltf) => {
           const modelRoot = gltf.scene;
           const box = new THREE.Box3().setFromObject(modelRoot);
@@ -133,6 +137,9 @@ export function BehaviourPatternCanvas({
         },
         undefined,
         () => {
+          console.error(
+            '[assets] Missing 3D model: put the file at "public/assets/site-model.glb" and reload. Showing fallback massing.'
+          );
           [
             [-1.7, -1.3, 1.2, 0.55],
             [1.2, -1.5, 1.8, 0.55],
@@ -325,6 +332,60 @@ export function BehaviourPatternCanvas({
       });
     }
 
+    /* --- Congestion / crowding: pinch points where flows converge --- */
+    if (layers.congestion) {
+      const cellSize = 0.55;
+      const cells = new Map<string, { x: number; z: number; sum: number; flows: Set<string> }>();
+      dataset.flows.forEach((flow) => {
+        const volume = flow.volumeBySlot[timeSlotId] ?? 0;
+        if (volume <= 0.03) return;
+        const pts = flow.path.map(([x, y]) => toWorld(x, y));
+        for (let i = 0; i < pts.length - 1; i += 1) {
+          for (let t = 0; t <= 1; t += 0.2) {
+            const x = pts[i].x + (pts[i + 1].x - pts[i].x) * t;
+            const z = pts[i].z + (pts[i + 1].z - pts[i].z) * t;
+            const key = `${Math.round(x / cellSize)}:${Math.round(z / cellSize)}`;
+            const cell = cells.get(key) ?? { x: 0, z: 0, sum: 0, flows: new Set<string>() };
+            cell.x = Math.round(x / cellSize) * cellSize;
+            cell.z = Math.round(z / cellSize) * cellSize;
+            cell.sum += volume;
+            cell.flows.add(flow.id);
+            cells.set(key, cell);
+          }
+        }
+      });
+      const pinchPoints = [...cells.values()]
+        .filter((cell) => cell.flows.size >= 2)
+        .sort((a, b) => b.sum - a.sum)
+        .slice(0, 3);
+      const maxSum = pinchPoints[0]?.sum || 1;
+      pinchPoints.forEach((cell, index) => {
+        const ratio = cell.sum / maxSum;
+        const disc = new THREE.Mesh(
+          new THREE.CircleGeometry(0.32 + ratio * 0.38, 48),
+          new THREE.MeshBasicMaterial({
+            color: 0xe35d4f,
+            transparent: true,
+            opacity: 0.16 + ratio * 0.26,
+            depthWrite: false
+          })
+        );
+        disc.rotation.x = -Math.PI / 2;
+        disc.position.set(cell.x, GROUND_Y + 0.026, cell.z);
+        scene.add(disc);
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(0.32 + ratio * 0.38, 0.35 + ratio * 0.38, 48),
+          new THREE.MeshBasicMaterial({ color: 0xe35d4f, transparent: true, opacity: 0.5, depthWrite: false })
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(cell.x, GROUND_Y + 0.027, cell.z);
+        scene.add(ring);
+        if (index === 0) {
+          scene.add(makeLabelSprite("Congestion", cell.x, GROUND_Y + 0.3, cell.z, "#e35d4f"));
+        }
+      });
+    }
+
     if (layers.activityPoints) {
       dataset.activityPoints.forEach((point) => {
         const pos = toWorld(point.x, point.y);
@@ -379,6 +440,11 @@ export function BehaviourPatternCanvas({
     const clock = new THREE.Clock();
     renderer.setAnimationLoop(() => {
       const elapsed = clock.getElapsedTime();
+      // Camera entrance easing (easeOutCubic over the first 1.4s).
+      if (elapsed < 1.4) {
+        const t = 1 - Math.pow(1 - elapsed / 1.4, 3);
+        camera.position.lerpVectors(cameraFrom, cameraTo, t);
+      }
       flowPulses.forEach((pulse) => {
         const t = (elapsed * pulse.speed + pulse.offset) % 1;
         const point = pulse.curve.getPoint(t);

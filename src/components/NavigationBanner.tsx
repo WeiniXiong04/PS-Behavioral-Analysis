@@ -7,6 +7,7 @@ const navItems = [
   { href: "/", match: "/", label: "Home" },
   { href: "/scale", match: "/scale", label: "Configure" },
   { href: "/output", match: "/output", label: "Analysis" },
+  { href: "/optimization-effects", match: "/optimization-effects", label: "Optimization" },
   { href: "/methodology", match: "/methodology", label: "Methodology" }
 ];
 
