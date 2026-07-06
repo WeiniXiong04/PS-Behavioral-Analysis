@@ -87,7 +87,7 @@ export function BehaviourPatternViewer({ dataset, timeSlotId, onTimeSlotChange }
                   type="button"
                   onClick={() => onTimeSlotChange(slot.id)}
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    timeSlotId === slot.id ? "bg-black text-white" : "text-black/55 hover:text-black"
+                    timeSlotId === slot.id ? "liquid-control-active" : "liquid-control text-black/55 hover:text-black"
                   }`}
                 >
                   {slot.label}
@@ -97,7 +97,7 @@ export function BehaviourPatternViewer({ dataset, timeSlotId, onTimeSlotChange }
             <select
               value={userTypeId}
               onChange={(event) => setUserTypeId(event.target.value)}
-              className="glass-chip rounded-full px-4 py-2 text-xs font-semibold outline-none"
+              className="liquid-control rounded-full px-4 py-2 text-xs font-semibold outline-none"
               aria-label="User type filter"
             >
               <option value="all">All Users</option>

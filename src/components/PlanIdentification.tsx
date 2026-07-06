@@ -71,7 +71,7 @@ export function PlanIdentification({ markers, programs, onChange, loaded = true 
               type="button"
               onClick={() => setMarkerType(type)}
               className={`rounded-full px-4 py-2 text-xs font-semibold uppercase ${
-                markerType === type ? "bg-black text-white" : "glass-chip text-black/55"
+                markerType === type ? "liquid-control-active" : "liquid-control text-black/55"
               }`}
             >
               {markerLabels[type]}
@@ -81,7 +81,7 @@ export function PlanIdentification({ markers, programs, onChange, loaded = true 
             <select
               value={programId}
               onChange={(event) => setProgramId(event.target.value)}
-              className="glass-chip rounded-full px-3 py-2 text-xs outline-none"
+              className="liquid-control rounded-full px-3 py-2 text-xs outline-none"
             >
               {programs.map((program) => (
                 <option key={program.id} value={program.id}>
@@ -136,8 +136,8 @@ export function PlanIdentification({ markers, programs, onChange, loaded = true 
           </div>
         )}
         {markers.map((marker, index) => (
-          <div key={marker.id} className="glass-chip flex items-center gap-2 rounded-full px-3 py-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-xs font-bold">
+          <div key={marker.id} className="liquid-control flex items-center gap-2 rounded-full px-3 py-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/45 text-xs font-bold">
               {index + 1}
             </span>
             <span className="min-w-[72px] text-sm font-semibold capitalize">{marker.type}</span>
@@ -145,7 +145,7 @@ export function PlanIdentification({ markers, programs, onChange, loaded = true 
               <select
                 value={marker.programId}
                 onChange={(event) => updateMarkerProgram(marker.id, event.target.value)}
-                className="min-w-0 flex-1 rounded-full border border-black/10 bg-white px-3 py-2 text-sm outline-none"
+                className="liquid-control min-w-0 flex-1 rounded-full px-3 py-2 text-sm outline-none"
               >
                 {programs.map((program) => (
                   <option key={program.id} value={program.id}>
@@ -161,7 +161,7 @@ export function PlanIdentification({ markers, programs, onChange, loaded = true 
             <button
               type="button"
               onClick={() => removeMarker(marker.id)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black"
+              className="liquid-control flex h-8 w-8 items-center justify-center rounded-full text-black"
               aria-label="Remove marker"
             >
               <Trash2 size={15} />

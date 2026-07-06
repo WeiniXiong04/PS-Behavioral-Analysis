@@ -146,7 +146,7 @@ export function ScaleForm() {
             <input
               value={locationName}
               onChange={(event) => setLocationName(event.target.value)}
-              className="glass-chip rounded-full px-4 py-3 text-lg font-semibold text-black outline-none"
+              className="liquid-control rounded-full px-4 py-3 text-lg font-semibold text-black outline-none"
               aria-label="Location name"
             />
           </label>
@@ -303,7 +303,7 @@ function CoefficientSlider({
     <label className="grid gap-2 text-sm text-black/65">
       <span className="flex items-center justify-between gap-4">
         <span className="font-semibold">{label}</span>
-        <span className="rounded-full bg-white/45 px-2.5 py-1 text-xs font-semibold text-black/60">
+        <span className="liquid-control rounded-full px-2.5 py-1 text-xs font-semibold text-black/60">
           {value.toFixed(2)}
         </span>
       </span>
@@ -314,7 +314,7 @@ function CoefficientSlider({
         step={step}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="accent-black"
+        className="liquid-range w-full"
       />
     </label>
   );

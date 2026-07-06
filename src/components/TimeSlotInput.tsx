@@ -53,7 +53,7 @@ export function TimeSlotInput({
             type="time"
             value={opening}
             onChange={(event) => onOpeningChange(event.target.value)}
-            className="glass-chip rounded-full px-4 py-3 text-base text-black outline-none focus:border-black"
+            className="liquid-control rounded-full px-4 py-3 text-base text-black outline-none focus:border-white/80"
           />
         </label>
         <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-black/45">
@@ -62,7 +62,7 @@ export function TimeSlotInput({
             type="time"
             value={closing}
             onChange={(event) => onClosingChange(event.target.value)}
-            className="glass-chip rounded-full px-4 py-3 text-base text-black outline-none focus:border-black"
+            className="liquid-control rounded-full px-4 py-3 text-base text-black outline-none focus:border-white/80"
           />
         </label>
       </div>
@@ -72,19 +72,19 @@ export function TimeSlotInput({
             <input
               value={slot.label}
               onChange={(event) => updateSlot(slot.id, "label", event.target.value)}
-              className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-semibold outline-none"
+              className="liquid-control rounded-full px-3 py-2 text-sm font-semibold outline-none"
             />
             <input
               type="time"
               value={slot.start}
               onChange={(event) => updateSlot(slot.id, "start", event.target.value)}
-              className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm outline-none"
+              className="liquid-control rounded-full px-3 py-2 text-sm outline-none"
             />
             <input
               type="time"
               value={slot.end}
               onChange={(event) => updateSlot(slot.id, "end", event.target.value)}
-              className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm outline-none"
+              className="liquid-control rounded-full px-3 py-2 text-sm outline-none"
             />
           </div>
         ))}

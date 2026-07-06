@@ -28,12 +28,12 @@ export function CursorGlow() {
 
       if (glowRef.current) {
         glowRef.current.style.opacity = "1";
-        glowRef.current.style.background = `radial-gradient(circle 240px at ${x}px ${y}px, rgba(127, 169, 155, 0.2), rgba(135, 155, 177, 0.09) 34%, transparent 68%)`;
+        glowRef.current.style.background = `radial-gradient(circle 132px at ${x}px ${y}px, rgba(255, 212, 111, 0.2), rgba(255, 232, 170, 0.08) 38%, transparent 72%)`;
       }
       if (gridRef.current) {
         gridRef.current.style.opacity = "1";
-        gridRef.current.style.maskImage = `radial-gradient(circle 260px at ${x}px ${y}px, rgba(0,0,0,0.9), transparent 72%)`;
-        gridRef.current.style.webkitMaskImage = `radial-gradient(circle 260px at ${x}px ${y}px, rgba(0,0,0,0.9), transparent 72%)`;
+        gridRef.current.style.maskImage = `radial-gradient(circle 150px at ${x}px ${y}px, rgba(0,0,0,0.56), transparent 70%)`;
+        gridRef.current.style.webkitMaskImage = `radial-gradient(circle 150px at ${x}px ${y}px, rgba(0,0,0,0.56), transparent 70%)`;
       }
 
       // Glass specular highlight on the hovered panel only.
@@ -83,7 +83,7 @@ export function CursorGlow() {
         className="pointer-events-none fixed inset-0 z-0 opacity-0 transition-opacity duration-500"
         style={{
           background:
-            "linear-gradient(rgba(17, 17, 17, 0.085) 1px, transparent 1px), linear-gradient(90deg, rgba(17, 17, 17, 0.085) 1px, transparent 1px)",
+            "linear-gradient(rgba(196, 151, 47, 0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(196, 151, 47, 0.055) 1px, transparent 1px)",
           backgroundSize: "44px 44px"
         }}
       />

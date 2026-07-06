@@ -57,7 +57,7 @@ export function OptionSelector<T extends Option>({
               type="button"
               onClick={() => toggle(option)}
               className={`rounded-full border px-4 py-2 text-sm transition ${
-                active ? "border-black bg-black text-white" : "border-white/60 bg-white/35 text-black backdrop-blur-lg hover:border-black/30"
+                active ? "liquid-control-active" : "liquid-control text-black/78 hover:border-white/80 hover:bg-white/30"
               }`}
             >
               {option.label}
@@ -70,7 +70,7 @@ export function OptionSelector<T extends Option>({
           value={customLabel}
           onChange={(event) => setCustomLabel(event.target.value)}
           placeholder={`Add custom ${title.toLowerCase()}`}
-          className="glass-chip min-w-0 flex-1 rounded-full px-4 py-2 text-sm outline-none focus:border-black"
+          className="liquid-control min-w-0 flex-1 rounded-full px-4 py-2 text-sm outline-none placeholder:text-black/34 focus:border-white/80"
         />
         <button
           type="button"
